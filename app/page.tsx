@@ -1,15 +1,14 @@
 import Link from "next/link";
+import { connection } from "next/server";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  await searchParams;
+export default async function Page() {
+  await connection();
+
   const randomId = Math.random().toString(36).substring(2, 11);
+
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-8 text-white font-sans">
-      <h1 className="text-5xl font-extrabold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-gradient-x">
+      <h1 className="text-5xl font-extrabold mb-8 bg-clip-text text-transparent bg-linear-to-r from-blue-400 via-purple-500 to-pink-500 animate-gradient-x">
         Next.js Cache Components
       </h1>
 
@@ -39,10 +38,6 @@ export default async function Page({
           </li>
         </ul>
       </div>
-
-      <footer className="mt-12 text-gray-500 text-sm">
-        Next.js 16.1.6 • Cache Components Enabled
-      </footer>
     </div>
   );
 }
