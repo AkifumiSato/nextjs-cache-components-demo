@@ -96,21 +96,13 @@ export default async function CacheDemoPage({
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-5xl w-full">
-        <Suspense fallback={<Skeleton />}>
-          <Cached />
-        </Suspense>
+        <Cached />
 
-        <Suspense fallback={<Skeleton />}>
-          <RemoteCached />
-        </Suspense>
+        <RemoteCached />
 
-        <Suspense fallback={<Skeleton />}>
-          <DynamicCached randomId={randomId} />
-        </Suspense>
+        <DynamicCached randomId={randomId} />
 
-        <Suspense fallback={<Skeleton />}>
-          <DynamicRemoteCached randomId={randomId} />
-        </Suspense>
+        <DynamicRemoteCached randomId={randomId} />
       </div>
 
       <div className="mt-16 text-center">
@@ -121,16 +113,6 @@ export default async function CacheDemoPage({
           ← Back to Home
         </Link>
       </div>
-    </div>
-  );
-}
-
-function Skeleton() {
-  return (
-    <div className="p-6 bg-gray-800 rounded-2xl shadow-xl border border-gray-700 animate-pulse">
-      <div className="h-6 w-1/3 bg-gray-700 rounded mb-4" />
-      <div className="h-4 w-1/2 bg-gray-700 rounded mb-4" />
-      <div className="h-12 w-full bg-gray-900 rounded-lg" />
     </div>
   );
 }
