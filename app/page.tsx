@@ -1,20 +1,21 @@
-"use cache";
+import Link from "next/link";
 
-import { cacheLife } from "next/cache";
-
-export default async function Page() {
-  cacheLife("seconds");
-
-  const todo = await fetch("https://dummyjson.com/todos/random").then((res) =>
-    res.json(),
-  );
-
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  // Accessing searchParams makes the page dynamic
+  await searchParams;
+  const randomId = Math.random().toString(36).substring(2, 11);
   return (
     <div>
-      <h1>Hello, Next.js!</h1>
-      <pre>
-        <code>{JSON.stringify(todo)}</code>
-      </pre>
+      <h1>Next.js Cache Components Demo</h1>
+      <ul>
+        <li>
+          <Link href={`/cache?randomId=${randomId}`}>cache demo (randomId: {randomId})</Link>
+        </li>
+      </ul>
     </div>
   );
 }
