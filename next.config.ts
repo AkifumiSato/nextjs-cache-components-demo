@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  cacheComponents: true,
   experimental: {
     mcpServer: true,
-    cacheComponents: true,
   },
 };
 
