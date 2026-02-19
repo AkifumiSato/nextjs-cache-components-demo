@@ -79,7 +79,7 @@ export default async function CacheDemoPage({
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8 md:p-12 font-sans flex flex-col items-center">
       <header className="mb-12 text-center">
-        <h1 className="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-gradient-x">
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-linear-to-r from-blue-400 via-purple-500 to-pink-500 animate-gradient-x">
           Cache Components Explorer
         </h1>
         <p className="text-gray-400 max-w-2xl mx-auto">
@@ -121,10 +121,6 @@ export default async function CacheDemoPage({
           ← Back to Home
         </Link>
       </div>
-
-      <footer className="mt-20 text-gray-600 text-xs text-center border-t border-gray-800 pt-8 w-full max-w-5xl">
-        Built with Next.js 16.1.6 and Tailwind CSS.
-      </footer>
     </div>
   );
 }
