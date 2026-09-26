@@ -12,7 +12,7 @@ export default function InstantNavigationsPage() {
           <code>partialPrefetching: true</code>）を有効にした状態で、Link の
           prefetch 指定と instant
           設定の違いによって、遷移時の表示がどう変わるかを比べるデモです。商品ページはどれも、商品名とキャッシュされた価格（use
-          cache）、毎リクエスト取得するレビュー（2 秒）・おすすめ（3
+          cache）、毎リクエスト取得するレビュー（2 秒）・在庫（3
           秒）を表示します。
         </p>
       </div>
@@ -38,7 +38,7 @@ export default function InstantNavigationsPage() {
               <th className="py-2 pr-4 font-normal">タグ</th>
               <th className="py-2 pr-4 font-normal">prefetch されるもの</th>
               <th className="py-2 pr-4 font-normal">クリック直後</th>
-              <th className="py-2 font-normal">レビュー・おすすめ</th>
+              <th className="py-2 font-normal">レビュー・在庫</th>
             </tr>
           </thead>
           <tbody className="text-neutral-300">
@@ -91,7 +91,6 @@ export default function InstantNavigationsPage() {
             が空で、価格の計算に 1 秒かかる）
           </li>
           <li>prefetch が終わる前にクリックしたか</li>
-          <li>一覧から遷移したか、商品ページのおすすめから遷移したか</li>
         </ul>
       </div>
       <div className="mb-12 space-y-4">
@@ -228,8 +227,7 @@ export default function InstantNavigationsPage() {
             クライアントはここから App Shell
             を取り出して同じルートの他のリンクと共有しつつ、その URL
             の中身も保持します。そのため prefetch={"{true}"}{" "}
-            がなくても、一覧ページの最初のリンクだけは中身まで即座に表示されます。商品ページのおすすめから遷移した場合は、どちらの商品も
-            skeleton から表示されます。
+            がなくても、一覧ページの最初のリンクだけは中身まで即座に表示されます。
           </p>
           <p className="text-neutral-500">
             Next.js 16.3.6 で計測した挙動で、docs には記載がありません。
@@ -244,7 +242,7 @@ export default function InstantNavigationsPage() {
             に依存するため含まれません。
           </p>
         </Note>
-        <Note summary="Q. prefetch={true} ならレビューやおすすめも先に取得される？">
+        <Note summary="Q. prefetch={true} ならレビューや在庫も先に取得される？">
           <p>
             されません。事前に解決されるのは params
             と、それに依存するキャッシュ済みのデータ（価格）までです。毎リクエスト取得するデータは、遷移後に

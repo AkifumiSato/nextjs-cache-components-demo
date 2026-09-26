@@ -1,11 +1,5 @@
-import Link from "next/link";
-import {
-  getPrice,
-  getProductName,
-  getRecommendations,
-  getReviews,
-} from "../_lib/data";
-import { PendingHint } from "./pending-hint";
+import { Suspense } from "react";
+import { getPrice, getProductName, getReviews, getStock } from "../_lib/data";
 
 // Views
 
@@ -13,10 +7,12 @@ export function ProductHero({
   id,
   price,
   cachedAt,
+  stock,
 }: {
   id: string;
   price: number;
   cachedAt: string;
+  stock: React.ReactNode;
 }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 items-center">
@@ -24,9 +20,12 @@ export function ProductHero({
         {getProductName(id).charAt(0)}
       </div>
       <div>
-        <h2 className="text-2xl font-semibold text-neutral-100">
-          {getProductName(id)}
-        </h2>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <h2 className="text-2xl font-semibold text-neutral-100">
+            {getProductName(id)}
+          </h2>
+          {stock}
+        </div>
         <div className="mt-3 text-3xl font-semibold text-neutral-100">
           ¥{price.toLocaleString()}
         </div>
@@ -68,29 +67,23 @@ export function ReviewsView({
   );
 }
 
-export function RecommendationsView({
-  next,
-  fetchedAt,
-  basePath,
-  prefetch,
-}: {
-  next: { id: string; name: string };
-  fetchedAt: string;
-  basePath: string;
-  prefetch?: boolean;
-}) {
-  return (
-    <Section title="おすすめ" fetchedAt={fetchedAt}>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Link
-          href={`${basePath}/${next.id}`}
-          prefetch={prefetch}
-          className="flex items-center justify-between gap-2 p-4 rounded-lg border border-neutral-600 bg-neutral-800/60 text-neutral-100 hover:border-neutral-400 hover:bg-neutral-800 transition-colors"
-        >
-          {next.name} <PendingHint />
-        </Link>
-      </div>
-    </Section>
+// Fixed size so the tag doesn't shift the layout when it replaces the skeleton
+const stockTagClassName =
+  "inline-flex h-6 w-20 items-center justify-center rounded border text-xs font-medium";
+
+export function StockTag({ inStock }: { inStock: boolean }) {
+  return inStock ? (
+    <span
+      className={`${stockTagClassName} border-emerald-700/60 bg-emerald-950/40 text-emerald-300`}
+    >
+      在庫あり
+    </span>
+  ) : (
+    <span
+      className={`${stockTagClassName} border-neutral-700 bg-neutral-800/60 text-neutral-400`}
+    >
+      在庫なし
+    </span>
   );
 }
 
@@ -130,9 +123,13 @@ export function ProductHeroSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 items-center">
       <div className="aspect-square rounded-lg bg-neutral-800/40 animate-pulse" />
-      <div className="space-y-3">
-        <Bar className="h-8 w-64" />
-        <Bar className="h-9 w-32" />
+      <div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <Bar className="h-8 w-64" />
+          <StockSkeleton />
+        </div>
+        <Bar className="mt-3 h-9 w-32" />
+        <Bar className="mt-2 h-4 w-48" />
       </div>
     </div>
   );
@@ -151,14 +148,8 @@ export function ReviewsSkeleton() {
   );
 }
 
-export function RecommendationsSkeleton() {
-  return (
-    <Section title="おすすめ">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Bar className="h-14" />
-      </div>
-    </Section>
-  );
+export function StockSkeleton() {
+  return <Bar className="h-6 w-20" />;
 }
 
 export function ProductPageSkeleton() {
@@ -166,7 +157,6 @@ export function ProductPageSkeleton() {
     <div className="space-y-10">
       <ProductHeroSkeleton />
       <ReviewsSkeleton />
-      <RecommendationsSkeleton />
     </div>
   );
 }
@@ -178,27 +168,24 @@ export function ProductPageSkeleton() {
 // would delay the Suspense boundaries below on a runtime cache miss.
 export async function ProductSummary({ id }: { id: string }) {
   const { price, cachedAt } = await getPrice(id);
-  return <ProductHero id={id} price={price} cachedAt={cachedAt} />;
+  return (
+    <ProductHero
+      id={id}
+      price={price}
+      cachedAt={cachedAt}
+      stock={
+        <Suspense fallback={<StockSkeleton />}>
+          <Stock id={id} />
+        </Suspense>
+      }
+    />
+  );
 }
 
 export async function Reviews({ id }: { id: string }) {
   return <ReviewsView {...(await getReviews(id))} />;
 }
 
-export async function Recommendations({
-  id,
-  basePath,
-  prefetch,
-}: {
-  id: string;
-  basePath: string;
-  prefetch?: boolean;
-}) {
-  return (
-    <RecommendationsView
-      {...(await getRecommendations(id))}
-      basePath={basePath}
-      prefetch={prefetch}
-    />
-  );
+async function Stock({ id }: { id: string }) {
+  return <StockTag {...(await getStock(id))} />;
 }

@@ -2,17 +2,19 @@ import { cacheLife } from "next/cache";
 import { connection } from "next/server";
 
 // Products are paired within each demo route (1-2, 3-4, 5-6, 7-8)
-const products: Record<string, { name: string; price: number; next: string }> =
-  {
-    "1": { name: "メカニカルキーボード", price: 12800, next: "2" },
-    "2": { name: "ワイヤレスマウス", price: 4980, next: "1" },
-    "3": { name: "4K モニター", price: 39800, next: "4" },
-    "4": { name: "USB-C ハブ", price: 3480, next: "3" },
-    "5": { name: "ノイズキャンセリングヘッドホン", price: 29800, next: "6" },
-    "6": { name: "スタンディングデスク", price: 54800, next: "5" },
-    "7": { name: "Web カメラ", price: 8980, next: "8" },
-    "8": { name: "モニターアーム", price: 7980, next: "7" },
-  };
+const products: Record<
+  string,
+  { name: string; price: number; inStock: boolean }
+> = {
+  "1": { name: "メカニカルキーボード", price: 12800, inStock: true },
+  "2": { name: "ワイヤレスマウス", price: 4980, inStock: false },
+  "3": { name: "4K モニター", price: 39800, inStock: true },
+  "4": { name: "USB-C ハブ", price: 3480, inStock: false },
+  "5": { name: "ノイズキャンセリングヘッドホン", price: 29800, inStock: true },
+  "6": { name: "スタンディングデスク", price: 54800, inStock: false },
+  "7": { name: "Web カメラ", price: 8980, inStock: true },
+  "8": { name: "モニターアーム", price: 7980, inStock: false },
+};
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -34,7 +36,7 @@ export async function getPrice(id: string) {
   };
 }
 
-// Reviews and recommendations must be fresh, so they are fetched per request
+// Reviews and stock must be fresh, so they are fetched per request
 export async function getReviews(id: string) {
   await connection();
   await sleep(2000);
@@ -50,12 +52,8 @@ export async function getReviews(id: string) {
   };
 }
 
-export async function getRecommendations(id: string) {
+export async function getStock(id: string) {
   await connection();
   await sleep(3000);
-  const nextId = products[id]?.next ?? "1";
-  return {
-    next: { id: nextId, name: getProductName(nextId) },
-    fetchedAt: new Date().toLocaleTimeString(),
-  };
+  return { inStock: products[id]?.inStock ?? false };
 }

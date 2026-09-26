@@ -1,3 +1,4 @@
+import { BackLink } from "../_components/back-link";
 import { RouteTag } from "../_components/route-tag";
 
 export default function InstantPrefetchLayout({
@@ -8,6 +9,7 @@ export default function InstantPrefetchLayout({
   return (
     <div>
       <div className="mb-8">
+        <BackLink />
         <RouteTag variant="prefetch-true" />
         <p className="mt-3 text-sm text-neutral-400">
           リンクに prefetch={"{true}"} を指定。App Shell に加えて、params

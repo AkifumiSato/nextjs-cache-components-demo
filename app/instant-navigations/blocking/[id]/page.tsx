@@ -1,9 +1,5 @@
-import {
-  ProductHero,
-  RecommendationsView,
-  ReviewsView,
-} from "../../_components/product";
-import { getPrice, getRecommendations, getReviews } from "../../_lib/data";
+import { ProductHero, ReviewsView, StockTag } from "../../_components/product";
+import { getPrice, getReviews, getStock } from "../../_lib/data";
 
 // Opts out of instant validation. This does not change runtime behavior:
 // the navigation blocks because the page awaits everything without Suspense.
@@ -19,20 +15,21 @@ export default async function BlockingPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [price, reviews, recommendations] = await Promise.all([
+  const [price, reviews, stock] = await Promise.all([
     getPrice(id),
     getReviews(id),
-    getRecommendations(id),
+    getStock(id),
   ]);
 
   return (
     <div className="space-y-10">
-      <ProductHero id={id} price={price.price} cachedAt={price.cachedAt} />
-      <ReviewsView {...reviews} />
-      <RecommendationsView
-        {...recommendations}
-        basePath="/instant-navigations/blocking"
+      <ProductHero
+        id={id}
+        price={price.price}
+        cachedAt={price.cachedAt}
+        stock={<StockTag {...stock} />}
       />
+      <ReviewsView {...reviews} />
     </div>
   );
 }

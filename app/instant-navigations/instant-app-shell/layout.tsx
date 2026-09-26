@@ -1,3 +1,4 @@
+import { BackLink } from "../_components/back-link";
 import { RouteTag } from "../_components/route-tag";
 
 export default function InstantAppShellLayout({
@@ -8,6 +9,7 @@ export default function InstantAppShellLayout({
   return (
     <div>
       <div className="mb-8">
+        <BackLink />
         <RouteTag variant="app-shell" />
         <p className="mt-3 text-sm text-neutral-400">
           デフォルトの Link。ルート共通の App Shell（loading.tsx の

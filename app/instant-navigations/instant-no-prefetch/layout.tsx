@@ -1,3 +1,4 @@
+import { BackLink } from "../_components/back-link";
 import { RouteTag } from "../_components/route-tag";
 
 export default function InstantNoPrefetchLayout({
@@ -8,6 +9,7 @@ export default function InstantNoPrefetchLayout({
   return (
     <div>
       <div className="mb-8">
+        <BackLink />
         <RouteTag variant="no-prefetch" />
         <p className="mt-3 text-sm text-neutral-400">
           リンクに prefetch={"{false}"} を指定。何も prefetch

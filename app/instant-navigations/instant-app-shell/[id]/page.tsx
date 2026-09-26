@@ -1,8 +1,6 @@
 import { Suspense } from "react";
 import {
   ProductSummary,
-  Recommendations,
-  RecommendationsSkeleton,
   Reviews,
   ReviewsSkeleton,
 } from "../../_components/product";
@@ -23,12 +21,6 @@ export default async function InstantAppShellPage({
       <ProductSummary id={id} />
       <Suspense fallback={<ReviewsSkeleton />}>
         <Reviews id={id} />
-        <Suspense fallback={<RecommendationsSkeleton />}>
-          <Recommendations
-            id={id}
-            basePath="/instant-navigations/instant-app-shell"
-          />
-        </Suspense>
       </Suspense>
     </div>
   );

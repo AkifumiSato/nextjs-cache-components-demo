@@ -1,3 +1,4 @@
+import { BackLink } from "../_components/back-link";
 import { RouteTag } from "../_components/route-tag";
 
 export default function BlockingLayout({
@@ -8,6 +9,7 @@ export default function BlockingLayout({
   return (
     <div>
       <div className="mb-8">
+        <BackLink />
         <RouteTag variant="blocking" />
         <p className="mt-3 text-sm text-neutral-400">
           loading.tsx も Suspense もなく全データを await
