@@ -8,7 +8,7 @@ export default function Loading() {
         height: "100vh",
       }}
     >
-      <p>Loading...</p>
+      <p>読み込み中...</p>
     </div>
   );
 }

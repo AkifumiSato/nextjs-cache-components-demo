@@ -9,7 +9,7 @@ export default async function Page() {
   return (
     <div>
       <p className="text-neutral-400 mb-8">
-        Explore the new caching primitives in Next.js 16.
+        Next.js 16 の新しいキャッシュ機能を試すデモです。
       </p>
 
       <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -25,7 +25,7 @@ export default async function Page() {
               </span>
             </div>
             <p className="text-sm text-neutral-400 mt-2">
-              Test different 'use cache' strategies
+              'use cache' の種類ごとのキャッシュ挙動を確認
             </p>
           </Link>
         </li>
@@ -38,7 +38,7 @@ export default async function Page() {
               Instant Navigations
             </span>
             <p className="text-sm text-neutral-400 mt-2">
-              See how cached segments make navigations instant
+              Suspense と App Shell による即時遷移を確認
             </p>
           </Link>
         </li>

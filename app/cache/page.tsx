@@ -10,10 +10,10 @@ async function Cached() {
       <h2 className="text-lg font-semibold mb-1 text-blue-300">Cached</h2>
       <p className="text-neutral-400 font-mono text-sm mb-4">"use cache"</p>
       <div className="text-xs font-mono bg-neutral-900 p-3 rounded text-neutral-400">
-        Rendered at: {new Date().toLocaleTimeString()}
+        描画時刻: {new Date().toLocaleTimeString()}
       </div>
       <p className="mt-4 text-xs text-neutral-500">
-        No arguments, cached across all users and requests.
+        引数なし。全ユーザー・全リクエストで共有されます。
       </p>
     </div>
   );
@@ -30,10 +30,10 @@ async function RemoteCached() {
         "use cache: remote"
       </p>
       <div className="text-xs font-mono bg-neutral-900 p-3 rounded text-neutral-400">
-        Rendered at: {new Date().toLocaleTimeString()}
+        描画時刻: {new Date().toLocaleTimeString()}
       </div>
       <p className="mt-4 text-xs text-neutral-500">
-        Durable, shared across server instances via remote cache handler.
+        remote cache handler を通じて、サーバーインスタンス間で共有されます。
       </p>
     </div>
   );
@@ -50,10 +50,11 @@ async function DynamicCached({ randomId }: { randomId: string }) {
         "use cache" ({randomId})
       </p>
       <div className="text-xs font-mono bg-neutral-900 p-3 rounded text-neutral-400">
-        Rendered at: {new Date().toLocaleTimeString()}
+        描画時刻: {new Date().toLocaleTimeString()}
       </div>
       <p className="mt-4 text-xs text-neutral-500">
-        Arguments are part of the cache key. Changes with each randomId.
+        引数が cache key に含まれるため、randomId
+        ごとに別のキャッシュになります。
       </p>
     </div>
   );
@@ -70,10 +71,10 @@ async function DynamicRemoteCached({ randomId }: { randomId: string }) {
         "use cache: remote" ({randomId})
       </p>
       <div className="text-xs font-mono bg-neutral-900 p-3 rounded text-neutral-400">
-        Rendered at: {new Date().toLocaleTimeString()}
+        描画時刻: {new Date().toLocaleTimeString()}
       </div>
       <p className="mt-4 text-xs text-neutral-500">
-        Remote shared cache keyed by arguments.
+        引数を cache key とする remote cache です。
       </p>
     </div>
   );
@@ -121,14 +122,14 @@ export default function CacheDemoPage({
           Cache Components Explorer
         </h1>
         <p className="text-neutral-400 max-w-2xl">
-          Experience how Next.js 16 handles different caching strategies. The{" "}
+          Next.js 16 のキャッシュ戦略ごとの挙動を確認できます。URL の{" "}
           <span className="font-mono bg-neutral-800 px-1.5 py-0.5 rounded text-neutral-200">
             randomId
           </span>{" "}
-          from the URL is used as a cache key for dynamic components.
+          は、動的なコンポーネントの cache key として使われます。
         </p>
         <div className="mt-4 inline-block bg-neutral-800/60 px-3 py-1.5 rounded border border-neutral-700/60 text-sm text-neutral-400">
-          Current randomId:{" "}
+          現在の randomId:{" "}
           <Suspense
             fallback={<span className="font-mono text-neutral-600">…</span>}
           >
@@ -159,7 +160,7 @@ export default function CacheDemoPage({
           href="/"
           className="text-sm text-neutral-400 hover:text-neutral-100 transition-colors"
         >
-          ← Back to Home
+          ← トップに戻る
         </Link>
       </div>
     </div>
