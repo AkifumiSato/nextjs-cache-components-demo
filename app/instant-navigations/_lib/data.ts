@@ -56,10 +56,6 @@ export async function getRecommendations(id: string) {
   const nextId = products[id]?.next ?? "1";
   return {
     next: { id: nextId, name: getProductName(nextId) },
-    others: Object.keys(products)
-      .filter((key) => key !== id && key !== nextId)
-      .slice(0, 2)
-      .map(getProductName),
     fetchedAt: new Date().toLocaleTimeString(),
   };
 }

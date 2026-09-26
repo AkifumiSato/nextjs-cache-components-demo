@@ -23,12 +23,12 @@ export default async function InstantAppShellPage({
       <ProductSummary id={id} />
       <Suspense fallback={<ReviewsSkeleton />}>
         <Reviews id={id} />
-      </Suspense>
-      <Suspense fallback={<RecommendationsSkeleton />}>
-        <Recommendations
-          id={id}
-          basePath="/instant-navigations/instant-app-shell"
-        />
+        <Suspense fallback={<RecommendationsSkeleton />}>
+          <Recommendations
+            id={id}
+            basePath="/instant-navigations/instant-app-shell"
+          />
+        </Suspense>
       </Suspense>
     </div>
   );

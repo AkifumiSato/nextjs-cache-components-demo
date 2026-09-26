@@ -70,38 +70,26 @@ export function ReviewsView({
 
 export function RecommendationsView({
   next,
-  others,
   fetchedAt,
   basePath,
   prefetch,
 }: {
   next: { id: string; name: string };
-  others: string[];
   fetchedAt: string;
   basePath: string;
   prefetch?: boolean;
 }) {
   return (
     <Section title="おすすめ" fetchedAt={fetchedAt}>
-      <ul className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <li>
-          <Link
-            href={`${basePath}/${next.id}`}
-            prefetch={prefetch}
-            className="flex h-full items-center justify-between gap-2 p-4 rounded-lg border border-neutral-600 bg-neutral-800/60 text-neutral-100 hover:border-neutral-400 hover:bg-neutral-800 transition-colors"
-          >
-            {next.name} <PendingHint />
-          </Link>
-        </li>
-        {others.map((name) => (
-          <li
-            key={name}
-            className="p-4 rounded-lg border border-neutral-800 text-neutral-500"
-          >
-            {name}
-          </li>
-        ))}
-      </ul>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Link
+          href={`${basePath}/${next.id}`}
+          prefetch={prefetch}
+          className="flex items-center justify-between gap-2 p-4 rounded-lg border border-neutral-600 bg-neutral-800/60 text-neutral-100 hover:border-neutral-400 hover:bg-neutral-800 transition-colors"
+        >
+          {next.name} <PendingHint />
+        </Link>
+      </div>
     </Section>
   );
 }
@@ -167,8 +155,6 @@ export function RecommendationsSkeleton() {
   return (
     <Section title="おすすめ">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Bar className="h-14" />
-        <Bar className="h-14" />
         <Bar className="h-14" />
       </div>
     </Section>

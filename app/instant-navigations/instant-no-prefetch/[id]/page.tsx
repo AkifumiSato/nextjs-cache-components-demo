@@ -27,13 +27,13 @@ export default async function InstantNoPrefetchPage({
       <ProductSummary id={id} />
       <Suspense fallback={<ReviewsSkeleton />}>
         <Reviews id={id} />
-      </Suspense>
-      <Suspense fallback={<RecommendationsSkeleton />}>
-        <Recommendations
-          id={id}
-          basePath="/instant-navigations/instant-no-prefetch"
-          prefetch={false}
-        />
+        <Suspense fallback={<RecommendationsSkeleton />}>
+          <Recommendations
+            id={id}
+            basePath="/instant-navigations/instant-no-prefetch"
+            prefetch={false}
+          />
+        </Suspense>
       </Suspense>
     </div>
   );
