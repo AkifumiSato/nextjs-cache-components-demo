@@ -1,7 +1,9 @@
 export function Footer() {
   return (
-    <footer className="py-8 text-center text-gray-500 text-sm border-t border-gray-800 w-full max-w-5xl mx-auto px-8">
-      Next.js 16.1.6 • Cache Components Enabled
+    <footer className="border-t border-neutral-800">
+      <div className="max-w-5xl mx-auto px-8 py-6 text-neutral-500 text-sm">
+        Next.js 16.3.6 • Cache Components 有効
+      </div>
     </footer>
   );
 }
