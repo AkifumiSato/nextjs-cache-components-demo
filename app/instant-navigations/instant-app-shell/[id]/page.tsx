@@ -8,10 +8,10 @@ import {
 } from "../../_components/product";
 
 export function generateStaticParams() {
-  return [{ id: "1" }, { id: "2" }];
+  return [{ id: "3" }, { id: "4" }];
 }
 
-export default async function InstantPrefetchPage({
+export default async function InstantAppShellPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -27,8 +27,7 @@ export default async function InstantPrefetchPage({
       <Suspense fallback={<RecommendationsSkeleton />}>
         <Recommendations
           id={id}
-          basePath="/instant-navigations/instant-prefetch"
-          prefetch={true}
+          basePath="/instant-navigations/instant-app-shell"
         />
       </Suspense>
     </div>

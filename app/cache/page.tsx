@@ -33,7 +33,9 @@ async function RemoteCached() {
         描画時刻: {new Date().toLocaleTimeString()}
       </div>
       <p className="mt-4 text-xs text-neutral-500">
-        remote cache handler を通じて、サーバーインスタンス間で共有されます。
+        cacheHandlers の remote に設定した handler
+        に保存されます。このリポジトリでは未設定のため、use cache と同じ
+        in-memory LRU です。
       </p>
     </div>
   );
@@ -74,7 +76,8 @@ async function DynamicRemoteCached({ randomId }: { randomId: string }) {
         描画時刻: {new Date().toLocaleTimeString()}
       </div>
       <p className="mt-4 text-xs text-neutral-500">
-        引数を cache key とする remote cache です。
+        引数を cache key とする remote cache です（未設定のため実体は
+        in-memory）。
       </p>
     </div>
   );
