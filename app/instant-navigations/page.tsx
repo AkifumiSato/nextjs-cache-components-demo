@@ -55,9 +55,7 @@ export default function InstantNavigationsPage() {
                 <RouteTag variant="app-shell" />
               </td>
               <td className="py-2 pr-4">App Shell</td>
-              <td className="py-2 pr-4">
-                skeleton（一覧の最初のリンクは中身まで）
-              </td>
+              <td className="py-2 pr-4">skeleton</td>
               <td className="py-2">遷移後に Streaming</td>
             </tr>
             <tr className="border-b border-neutral-800/60">
@@ -78,6 +76,23 @@ export default function InstantNavigationsPage() {
             </tr>
           </tbody>
         </table>
+      </div>
+      <div className="text-sm text-neutral-500 mb-6">
+        <p className="mb-1">
+          上の表は典型的な挙動です。次の条件で変わることがあります（詳しくはよくある疑問を参照）。
+        </p>
+        <ul className="list-disc list-inside space-y-1">
+          <li>
+            一覧で最初に処理されたリンクか（prerender ごと prefetch
+            され、中身まで即座に表示される）
+          </li>
+          <li>
+            ローカルの next start でサーバー起動直後か（実行時の use cache
+            が空で、価格の計算に 1 秒かかる）
+          </li>
+          <li>prefetch が終わる前にクリックしたか</li>
+          <li>一覧から遷移したか、商品ページのおすすめから遷移したか</li>
+        </ul>
       </div>
       <div className="mb-12 space-y-4">
         <section className="p-5 rounded-lg border border-neutral-800 bg-neutral-900/40">
@@ -114,8 +129,7 @@ export default function InstantNavigationsPage() {
           <p className="text-sm text-neutral-400 mt-2 mb-3">
             デフォルトの Link。ルート共通の App Shell（loading.tsx の
             skeleton）だけを prefetch するため、クリックするとまず skeleton
-            が表示され、商品名・価格は遷移後に届きます。ただし一覧ページの 4K
-            モニター（最初のリンク）だけは、中身まで即座に表示されます。
+            が表示され、商品名・価格は遷移後に届きます。
           </p>
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <li>
@@ -204,10 +218,11 @@ export default function InstantNavigationsPage() {
         <Note summary="Q. なぜ同じタグの 2 商品で挙動が違うの？">
           <p>
             App Shell の prefetch はルートごとに 1
-            本だけで、一覧ページで最初に処理されたリンクの
-            URL（メカニカルキーボード、4K モニター）に対して飛びます。この URL
-            は generateStaticParams で prerender 済みなので、返ってくるのはその
-            URL の prerender（商品名・価格入り）です。
+            本だけで、一覧ページで最初に処理されたリンクの URL
+            に対して飛びます（多くの場合は先頭のリンクですが、処理順しだいでもう一方になることもあります）。この
+            URL は generateStaticParams で prerender
+            済みなので、返ってくるのはその URL の
+            prerender（商品名・価格入り）です。
           </p>
           <p>
             クライアントはここから App Shell
@@ -248,12 +263,20 @@ export default function InstantNavigationsPage() {
             {"{true}"} のリンク単位の prefetch や prefetch={"{false}"}{" "}
             の遷移も、実行時にレンダリングされます。
           </p>
+        </Note>
+        <Note summary="Q. ローカルでサーバー起動直後だけ、価格まで skeleton になるのはなぜ？">
           <p>
-            実行時のキャッシュ（use cache のデフォルトはプロセスごとの in-memory
-            LRU）には build
-            時の結果が入っていないため、サーバー起動後の初回だけ価格の計算に 1
-            秒かかります。prefetch が終わる前にクリックすると skeleton
-            が表示されるのはこのためです。
+            build 時の prerender はファイル（Vercel では
+            CDN）から返されます。use cache の結果はこの prerender
+            に含まれるだけで、実行時のキャッシュには入りません。
+          </p>
+          <p>
+            一方、prefetch={"{true}"} のリンク単位の prefetch
+            や遷移時のリクエストは、オリジンで実行時にレンダリングされます。use
+            cache のデフォルトはプロセスごとの in-memory LRU なので、ローカルの
+            next start ではサーバー起動直後はキャッシュが空で、価格の計算（1
+            秒）からやり直しになります。その間は価格まで skeleton
+            になり、一度計算されるとプロセス内にキャッシュされるため、以降は即座に表示されます。
           </p>
         </Note>
         <Note summary="Q. どの prefetch が飛んだかはどう見分ける？">
