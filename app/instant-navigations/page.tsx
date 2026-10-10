@@ -31,9 +31,8 @@ export default function InstantNavigationsPage() {
             商品ページはどれも、商品情報（1 秒）・レコメンド（2 秒）・在庫（1.5
             秒）を表示します。instant
             では商品情報だけをクリック前に用意し、レコメンドと在庫は遷移時に取得します。instant
-            + prefetch
-            では、在庫も含めてクリック前に用意します（在庫のキャッシュは 10
-            秒）。各データの横に、どこで・いつ生成されたかを表示しています。
+            + prefetch では、在庫もクリック前に用意します（在庫のキャッシュは 10
+            秒）。レコメンドは両方とも遷移時に取得します。各データの横に、どこで・いつ生成されたかを表示しています。
           </p>
         </Note>
       </div>
@@ -126,10 +125,10 @@ const comparison: Record<
     stock: "遷移時に Streaming（1.5 秒）",
   },
   instantPrefetch: {
-    prefetched: "App Shell ＋ 商品情報・レコメンド・在庫",
-    onClick: "すべて表示",
-    recommendations: "prefetch 済み",
-    stock: "prefetch 済み（10 秒キャッシュ内なら再取得なし）",
+    prefetched: "App Shell ＋ 商品情報・在庫",
+    onClick: "商品情報・在庫を表示",
+    recommendations: "遷移時に Streaming（キャッシュ内なら即座）",
+    stock: "prefetch 済み（遷移の応答で最新の値に置き換わることがある）",
   },
 };
 

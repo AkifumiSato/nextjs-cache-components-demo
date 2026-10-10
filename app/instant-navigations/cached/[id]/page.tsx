@@ -70,7 +70,7 @@ async function ProductRecommendations({
   return (
     <RecommendationsView
       recommendations={await getRecommendations(id)}
-      source="connection() + use cache (hours)"
+      source="connection() + use cache (10 秒)"
     />
   );
 }

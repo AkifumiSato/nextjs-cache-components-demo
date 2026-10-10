@@ -1,7 +1,8 @@
 import { cacheLife } from "next/cache";
 import { connection } from "next/server";
 
-// Products are paired within each demo route (1-2, 3-4, 5-6, 7-8)
+// Products are paired within each demo route (1-2, 3-4, 5-6). 7-8 only
+// appear as recommendations.
 const products: Record<string, { name: string; price: number; stock: number }> =
   {
     "1": { name: "メカニカルキーボード", price: 12800, stock: 12 },
@@ -68,15 +69,16 @@ export async function getRecommendationsDynamic(id: string) {
   return fetchRecommendations(id);
 }
 
-// Stock can't be cached, so every pattern fetches it on every request
+// Stock isn't cached in the legacy and instant patterns
 export async function getStockDynamic(id: string) {
   await connection();
   return fetchStock(id);
 }
 
 // Short enough to refresh often, long enough to absorb repeated prefetches.
-// expire must be longer than revalidate.
-const shortCacheLife = { stale: 10, revalidate: 10, expire: 20 };
+// expire must be longer than revalidate. The client router raises stale to at
+// least 30 seconds, so it is set to 30 explicitly.
+const shortCacheLife = { stale: 30, revalidate: 10, expire: 20 };
 
 // Product details rarely change, so they are cached and can be prerendered
 // or prefetched
@@ -87,8 +89,8 @@ export async function getProduct(id: string) {
   return fetchProduct(id);
 }
 
-// Recommendations can be cached, but pages defer them to runtime with
-// connection() or prefetch() so they aren't generated at build time
+// Recommendations can be cached, but pages call connection() first so they
+// aren't generated at build time or in the per-link prefetch
 export async function getRecommendations(id: string) {
   "use cache";
   cacheLife(shortCacheLife);

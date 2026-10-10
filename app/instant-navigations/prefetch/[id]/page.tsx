@@ -1,4 +1,4 @@
-import { prefetch } from "next/cache";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import {
   ProductHero,
@@ -17,9 +17,9 @@ import {
 
 export const instant = true;
 
-// No generateStaticParams: a build-time prerender would include the
-// recommendations and stock below prefetch(). Without it, they are generated
-// at runtime by the per-link prefetch.
+// No generateStaticParams: the per-link prefetch could be served from a
+// build-time prerender, which leaves out the short-lived stock. Without it, the
+// per-link prefetch is rendered at runtime and includes the stock.
 
 export default function PrefetchPage({
   params,
@@ -62,24 +62,20 @@ async function ProductRecommendations({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  // Keeps the recommendations out of the App Shell, but unlike connection()
-  // they are rendered by the per-link prefetch from <Link prefetch={true}>
-  await prefetch();
+  // Runs on navigation, not in the App Shell or the per-link prefetch
+  await connection();
   return (
     <RecommendationsView
       recommendations={await getRecommendations(id)}
-      source="prefetch() + use cache (hours)"
+      source="connection() + use cache (10 秒)"
     />
   );
 }
 
-// Resolved at prefetch time, so the per-link prefetch includes the stock
+// Depends on params, so it stays out of the App Shell. It's cached, so the
+// per-link prefetch from <Link prefetch={true}> includes it.
 async function ProductStock({ id }: { id: string }) {
-  await prefetch();
   return (
-    <StockView
-      stock={await getStockCached(id)}
-      source="use cache (10 秒) + prefetch()"
-    />
+    <StockView stock={await getStockCached(id)} source="use cache (10 秒)" />
   );
 }

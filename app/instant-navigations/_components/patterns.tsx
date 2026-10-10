@@ -91,22 +91,30 @@ async function ProductRecommendations({ params }) {
     href: "/instant-navigations/prefetch",
     ids: ["5", "6"],
     prefetch: true,
-    change: "prefetch={true} + prefetch()",
-    observe: "商品情報・レコメンド・在庫がクリック直後に表示される",
+    change: "prefetch={true}（在庫を use cache に）",
+    observe: "商品情報・在庫はクリック直後に表示され、レコメンドは遷移時に届く",
     stages: [
       {
         stage: "prefetch（リンク単位）",
-        content:
-          "App Shell ＋ 商品情報・レコメンド（prefetch() + use cache）・在庫（prefetch() + use cache 10 秒）",
+        content: "App Shell ＋ 商品情報（use cache）・在庫（use cache 10 秒）",
       },
-      { stage: "遷移の応答", content: "prefetch 済みの内容を表示" },
+      {
+        stage: "遷移時",
+        content: "レコメンド（connection() + use cache 10 秒）",
+      },
     ],
     code: `<Link href="/instant-navigations/prefetch/5" prefetch={true}>
 
+// キャッシュ済みで URL（id）に依存するので、リンク単位の prefetch に含まれる
 async function ProductStock({ id }) {
-  // App Shell からは外すが、リンク単位の prefetch では実行される
-  await prefetch();
   return <StockView stock={await getStockCached(id)} />;
+}
+
+async function ProductRecommendations({ params }) {
+  const { id } = await params;
+  // prefetch では実行されず、遷移時に実行される
+  await connection();
+  return <RecommendationsView recommendations={await getRecommendations(id)} />;
 }`,
   },
 } as const satisfies Record<string, Pattern>;
