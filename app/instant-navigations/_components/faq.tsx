@@ -44,74 +44,72 @@ export function Faq() {
           クライアントはここから App Shell
           を取り出して同じルートの他のリンクと共有しつつ、その URL
           の中身も保持します。そのため prefetch={"{true}"}{" "}
-          がなくても、最初のリンクだけは中身まで即座に表示されます。use cache:
-          remote cache パターンも同じ構成なので同様です。
+          がなくても、最初のリンクだけは商品情報まで即座に表示されます。
         </p>
         <p className="text-neutral-500">
           Next.js 16.4.0 で計測した挙動で、docs には記載がありません。
         </p>
       </Note>
-      <Note summary="Q. navigation() は何をしているの？">
+      <Note summary="Q. レコメンドはキャッシュしているのに、なぜ instant パターンでは prefetch されないの？">
         <p>
-          await navigation() より下の処理を、App Shell と prefetch=
-          {"{true}"} のリンク単位の prefetch
-          から外し、実際に遷移したときに実行させます。prefetch
-          の時点では最寄りの Suspense の fallback（在庫の skeleton）が入ります。
+          instant パターンでは、レコメンドを await connection()
+          のあとで取得しています。connection()
+          より下はリクエスト時にしか実行されないため、build 時の prerender
+          にも、App Shell・リンク単位の prefetch にも含まれません。
         </p>
         <p>
-          prefetch={"{true}"}{" "}
-          は表示中のリンクごとにサーバー処理が走ります。在庫を prefetch
-          に含めると、クリックされないリンクのためにも在庫 API
-          を呼ぶことになり、prefetch 時点の在庫が表示されることにもなります。
+          getRecommendations は use cache
+          なので、結果はサーバーにキャッシュされます。2
+          秒かかるのは商品ごとに初回だけで、以降は遷移のたびに描画されますが、データはキャッシュから即座に返ります。
+        </p>
+      </Note>
+      <Note summary="Q. prefetch() は何をしているの？">
+        <p>
+          await prefetch() より下の処理を App Shell から外し、リンク単位の
+          prefetch か遷移時に実行させます。App Shell には最寄りの Suspense の
+          fallback（レコメンド・在庫の skeleton）が入ります。
         </p>
         <p>
           connection()
-          との違いは、下の処理をリクエスト依存にしない点です。そのため在庫は use
-          cache
-          でキャッシュでき、一度取得すれば次の遷移ではキャッシュから返ります。逆に、キャッシュしないデータは元から
-          prefetch に含まれないため、navigation() は不要です。
+          との違いは、下の処理をリクエスト依存にしない点です。そのため prefetch=
+          {"{true}"} のリンク単位の prefetch
+          で、レコメンドと在庫をクリック前に取得できます。
+        </p>
+        <p>
+          在庫は use cache（10 秒）を付けているので、表示中のリンクごとに
+          prefetch が走っても、在庫 API は商品ごとに 10 秒に 1
+          回程度しか呼ばれません。
+        </p>
+      </Note>
+      <Note summary="Q. instant では在庫・レコメンドが遷移時に取得されるのはなぜ？">
+        <p>
+          instant パターンでは、レコメンドと在庫を await connection()
+          のあとで取得しています。connection()
+          より下はリクエスト時にしか実行されないため、App Shell・リンク単位の
+          prefetch には含まれず、遷移時に Streaming されます。
         </p>
       </Note>
       <Note summary="Q. prefetch パターンだけ generateStaticParams がないのはなぜ？">
         <p>
-          navigation() が効くのは実行時のレンダリングだけです。build 時の
-          prerender には navigation() の下の在庫も含まれ、リンク単位の prefetch
-          がその prerender から返されることがあるため、在庫まで prefetch
-          されてしまいます。
+          prefetch() が効くのは実行時のレンダリングだけです。build 時の
+          prerender には prefetch() の下のレコメンド・在庫も含まれ、build
+          時に生成されてしまいます。
         </p>
         <p>
           generateStaticParams がなければ、リンク単位の prefetch
-          は実行時にレンダリングされ、params
-          に依存するキャッシュ済みの商品情報・レコメンドまでを解決し、在庫の手前で止まります。
+          は実行時にレンダリングされ、商品情報・レコメンド・在庫までを解決します。
         </p>
       </Note>
-      <Note summary="Q. use cache ではなく use cache: remote を使うのはなぜ？">
+      <Note summary="Q. 商品情報の生成時刻が build 時刻のままなのはなぜ？">
         <p>
-          在庫は鮮度を優先して connection()
-          で毎リクエスト描画する動的コンテンツにしています。use cache
-          のデフォルトはプロセスごとの in-memory LRU
-          なので、サーバーレス環境ではインスタンス間で共有されず、動的コンテンツ内ではヒット率が低くなりがちです。
-        </p>
-        <p>
-          use cache: remote は cacheHandlers の remote に設定した handler
-          に保存され、全インスタンスで共有されます。在庫 API
-          へのアクセスを、インスタンス数によらず 5 分に 1 回程度に抑えられます。
-        </p>
-        <p className="text-neutral-500">
-          このリポジトリでは remote の handler を設定していないため、ローカルの
-          next start では use cache と同じ in-memory LRU
-          として動きます。サーバーを再起動するとキャッシュは消えます。
-        </p>
-      </Note>
-      <Note summary="Q. 商品情報・レコメンドの生成時刻が build 時刻のままなのはなぜ？">
-        <p>
-          generateStaticParams で prerender した URL では、build 時の use cache
+          instant パターンでは、generateStaticParams で prerender した URL の
+          build 時の use cache
           の結果が実行時にも使われます。遷移時のリクエストは実行時にレンダリングされますが、cacheLife(&quot;hours&quot;)
           の revalidate（1 時間）を過ぎるまでは、build 時の結果が返ります。
         </p>
         <p>
-          prefetch パターンは prerender されていないため、最初にリンク単位の
-          prefetch が走った時刻になります。
+          レコメンドは prerender
+          に含まれないため、商品ごとに最初にリクエストされた時刻になります。
         </p>
         <p className="text-neutral-500">
           Next.js 16.4.0 の next start で計測した挙動です。

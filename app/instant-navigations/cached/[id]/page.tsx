@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import {
   ProductHero,
@@ -63,10 +64,13 @@ async function ProductRecommendations({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  // Keeps the recommendations out of prerenders and prefetches. The data is
+  // still cached, so only the first request per product waits for it.
+  await connection();
   return (
     <RecommendationsView
       recommendations={await getRecommendations(id)}
-      source="use cache (hours)"
+      source="connection() + use cache (hours)"
     />
   );
 }

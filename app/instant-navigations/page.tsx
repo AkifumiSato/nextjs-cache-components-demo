@@ -16,7 +16,7 @@ export default function InstantNavigationsPage() {
     <div>
       <div className="mb-6 space-y-4">
         <p className="text-neutral-400">
-          キャッシュと prefetch の設計によって、遷移体験がどう変わるかを 4
+          キャッシュと prefetch の設計によって、遷移体験がどう変わるかを 3
           段階で比べるデモです。下に行くほど 1 つずつ手法を足していきます。
         </p>
         <Note summary="準備">
@@ -29,7 +29,11 @@ export default function InstantNavigationsPage() {
           </p>
           <p>
             商品ページはどれも、商品情報（1 秒）・レコメンド（2 秒）・在庫（1.5
-            秒）を表示します。各データの横に、どこで・いつ生成されたかを表示しています。
+            秒）を表示します。instant
+            では商品情報だけをクリック前に用意し、レコメンドと在庫は遷移時に取得します。instant
+            + prefetch
+            では、在庫も含めてクリック前に用意します（在庫のキャッシュは 10
+            秒）。各データの横に、どこで・いつ生成されたかを表示しています。
           </p>
         </Note>
       </div>
@@ -50,7 +54,9 @@ function DemoPanel() {
       <p className="mb-4 text-sm text-neutral-500">
         上から順にクリックして、
         <span className="text-neutral-300">クリック直後に何が見えるか</span>と
-        <span className="text-neutral-300">在庫がいつ表示されるか</span>
+        <span className="text-neutral-300">
+          レコメンド・在庫がいつ表示されるか
+        </span>
         を比べてください。
       </p>
       <ol className="divide-y divide-neutral-800 rounded-lg border border-neutral-800 bg-neutral-900/40">
@@ -100,27 +106,30 @@ function PatternRow({ pattern, step }: { pattern: PatternKey; step: number }) {
 
 const comparison: Record<
   PatternKey,
-  { prefetched: string; onClick: string; stock: string }
+  {
+    prefetched: string;
+    onClick: string;
+    recommendations: string;
+    stock: string;
+  }
 > = {
   legacy: {
     prefetched: "レイアウトのみ",
     onClick: "切り替わらない（約 2 秒）",
+    recommendations: "全データが揃ってから一括表示",
     stock: "全データが揃ってから一括表示",
   },
   instant: {
     prefetched: "App Shell（レイアウト・見出し・skeleton）",
-    onClick: "skeleton → 遷移の応答で商品情報・レコメンド",
-    stock: "毎回 Streaming（1.5 秒）",
+    onClick: "skeleton → 遷移の応答で商品情報",
+    recommendations: "遷移時に Streaming（キャッシュ内なら即座）",
+    stock: "遷移時に Streaming（1.5 秒）",
   },
   instantPrefetch: {
-    prefetched: "App Shell ＋ 商品情報・レコメンド",
-    onClick: "在庫以外すべて表示",
-    stock: "遷移時に取得（キャッシュがあれば即座）",
-  },
-  instantPrefetchRemote: {
-    prefetched: "App Shell（レイアウト・見出し・skeleton）",
-    onClick: "skeleton → 遷移の応答で商品情報・レコメンド",
-    stock: "初回のみ Streaming、2 回目以降は即座",
+    prefetched: "App Shell ＋ 商品情報・レコメンド・在庫",
+    onClick: "すべて表示",
+    recommendations: "prefetch 済み",
+    stock: "prefetch 済み（10 秒キャッシュ内なら再取得なし）",
   },
 };
 
@@ -146,6 +155,7 @@ function ComparePanel() {
               <th className="py-2 pr-4 font-normal">パターン</th>
               <th className="py-2 pr-4 font-normal">prefetch されるもの</th>
               <th className="py-2 pr-4 font-normal">クリック直後</th>
+              <th className="py-2 pr-4 font-normal">レコメンド</th>
               <th className="py-2 font-normal">在庫</th>
             </tr>
           </thead>
@@ -160,6 +170,7 @@ function ComparePanel() {
                 </td>
                 <td className="py-2 pr-4">{comparison[key].prefetched}</td>
                 <td className="py-2 pr-4">{comparison[key].onClick}</td>
+                <td className="py-2 pr-4">{comparison[key].recommendations}</td>
                 <td className="py-2">{comparison[key].stock}</td>
               </tr>
             ))}
@@ -168,13 +179,15 @@ function ComparePanel() {
       </div>
       <div className="text-sm text-neutral-500">
         <p className="mb-1">
-          上の表は典型的な挙動です。次の条件で変わることがあります（詳しくは下の Q&amp;A）。
+          在庫は instant では遷移時に毎回取得し、instant + prefetch では
+          prefetch 時に取得します（10
+          秒以内の再訪はキャッシュから即座）。上の表は典型的な挙動で、次の条件で変わることがあります（詳しくは下の
+          Q&amp;A）。
         </p>
         <ul className="list-disc list-inside space-y-1">
           <li>
-            generateStaticParams
-            を使うパターンで、一覧で最初に処理されたリンクか（prerender ごと
-            prefetch され、中身まで即座に表示される）
+            instant パターンで、一覧で最初に処理されたリンクか（prerender ごと
+            prefetch され、商品情報まで即座に表示される）
           </li>
           <li>prefetch が終わる前にクリックしたか（App Shell の表示になる）</li>
           <li>

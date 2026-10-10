@@ -1,4 +1,4 @@
-import { connection } from "next/server";
+import { prefetch } from "next/cache";
 import { Suspense } from "react";
 import {
   ProductHero,
@@ -12,16 +12,16 @@ import {
 import {
   getProduct,
   getRecommendations,
-  getStockRemote,
+  getStockCached,
 } from "../../_lib/data";
 
 export const instant = true;
 
-export function generateStaticParams() {
-  return [{ id: "7" }, { id: "8" }];
-}
+// No generateStaticParams: a build-time prerender would include the
+// recommendations and stock below prefetch(). Without it, they are generated
+// at runtime by the per-link prefetch.
 
-export default function RemotePage({
+export default function PrefetchPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -62,23 +62,24 @@ async function ProductRecommendations({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  // Keeps the recommendations out of the App Shell, but unlike connection()
+  // they are rendered by the per-link prefetch from <Link prefetch={true}>
+  await prefetch();
   return (
     <RecommendationsView
       recommendations={await getRecommendations(id)}
-      source="use cache (hours)"
+      source="prefetch() + use cache (hours)"
     />
   );
 }
 
-// connection() keeps the stock out of prerenders, so it is rendered on every
-// request. The remote cache lets those requests share the result across
-// server instances.
+// Resolved at prefetch time, so the per-link prefetch includes the stock
 async function ProductStock({ id }: { id: string }) {
-  await connection();
+  await prefetch();
   return (
     <StockView
-      stock={await getStockRemote(id)}
-      source="use cache: remote (5 分)"
+      stock={await getStockCached(id)}
+      source="use cache (10 秒) + prefetch()"
     />
   );
 }

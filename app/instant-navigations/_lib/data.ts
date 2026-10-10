@@ -68,12 +68,18 @@ export async function getRecommendationsDynamic(id: string) {
   return fetchRecommendations(id);
 }
 
+// Stock can't be cached, so every pattern fetches it on every request
 export async function getStockDynamic(id: string) {
   await connection();
   return fetchStock(id);
 }
 
-// Cached: product details and recommendations rarely change
+// Short enough to refresh often, long enough to absorb repeated prefetches.
+// expire must be longer than revalidate.
+const shortCacheLife = { stale: 10, revalidate: 10, expire: 20 };
+
+// Product details rarely change, so they are cached and can be prerendered
+// or prefetched
 
 export async function getProduct(id: string) {
   "use cache";
@@ -81,26 +87,18 @@ export async function getProduct(id: string) {
   return fetchProduct(id);
 }
 
+// Recommendations can be cached, but pages defer them to runtime with
+// connection() or prefetch() so they aren't generated at build time
 export async function getRecommendations(id: string) {
   "use cache";
-  cacheLife("hours");
+  cacheLife(shortCacheLife);
   return fetchRecommendations(id);
 }
 
-// Stock may be cached for a few minutes. stale >= 30s keeps it eligible for
-// per-link prefetches, so callers defer it with navigation() to avoid hitting
-// the stock API for every visible link.
-const stockCacheLife = { stale: 60, revalidate: 300, expire: 3600 };
-
+// Stock cached for the prefetch pattern. Its per-link prefetch runs for every
+// visible link, so the cache keeps the stock API calls down.
 export async function getStockCached(id: string) {
   "use cache";
-  cacheLife(stockCacheLife);
-  return fetchStock(id);
-}
-
-// Stock shared across server instances through the remote cache handler
-export async function getStockRemote(id: string) {
-  "use cache: remote";
-  cacheLife(stockCacheLife);
+  cacheLife(shortCacheLife);
   return fetchStock(id);
 }

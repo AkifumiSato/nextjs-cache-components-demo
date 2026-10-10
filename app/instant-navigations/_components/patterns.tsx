@@ -56,11 +56,12 @@ export default async function Page({ params }) {
         stage: "prefetch（App Shell）",
         content: "レイアウト・見出し・skeleton",
       },
+      { stage: "遷移の応答", content: "商品情報（use cache）" },
       {
-        stage: "遷移の応答",
-        content: "商品情報・レコメンド（use cache）",
+        stage: "Streaming（遷移時）",
+        content:
+          "レコメンド（connection() + use cache）・在庫（connection()・毎リクエスト取得・1.5 秒）",
       },
-      { stage: "Streaming", content: "在庫（毎リクエスト取得・1.5 秒）" },
     ],
     code: `export const instant = true;
 
@@ -75,67 +76,37 @@ export default function Page({ params }) {
       <ProductSummary params={params} />
     </Suspense>
   );
+}
+
+async function ProductRecommendations({ params }) {
+  const { id } = await params;
+  // レコメンドはキャッシュするが、connection() で prerender・prefetch から外す
+  await connection();
+  return <RecommendationsView recommendations={await getRecommendations(id)} />;
 }`,
   },
   instantPrefetch: {
     label: "instant + prefetch",
     className: "border-emerald-700/60 bg-emerald-950/40 text-emerald-300",
-    href: "/instant-navigations/navigation",
+    href: "/instant-navigations/prefetch",
     ids: ["5", "6"],
     prefetch: true,
-    change: "prefetch={true} + navigation()",
-    observe: "在庫以外がすべて即表示され、在庫だけ遷移時に取得される",
+    change: "prefetch={true} + prefetch()",
+    observe: "商品情報・レコメンド・在庫がクリック直後に表示される",
     stages: [
       {
         stage: "prefetch（リンク単位）",
-        content: "App Shell ＋ 商品情報・レコメンド",
-      },
-      {
-        stage: "遷移時",
         content:
-          "在庫（navigation() 以降・use cache 5 分なので 2 回目以降は即座）",
+          "App Shell ＋ 商品情報・レコメンド（prefetch() + use cache）・在庫（prefetch() + use cache 10 秒）",
       },
+      { stage: "遷移の応答", content: "prefetch 済みの内容を表示" },
     ],
-    code: `<Link href="/instant-navigations/navigation/5" prefetch={true}>
+    code: `<Link href="/instant-navigations/prefetch/5" prefetch={true}>
 
 async function ProductStock({ id }) {
-  // ここから下は prefetch に含めず、遷移時に実行する
-  await navigation();
+  // App Shell からは外すが、リンク単位の prefetch では実行される
+  await prefetch();
   return <StockView stock={await getStockCached(id)} />;
-}`,
-  },
-  instantPrefetchRemote: {
-    label: "instant + prefetch + remote cache",
-    className: "border-violet-700/60 bg-violet-950/40 text-violet-300",
-    href: "/instant-navigations/remote",
-    ids: ["7", "8"],
-    prefetch: undefined,
-    change: "connection() + use cache: remote",
-    observe: "初回は在庫を待つが、2 回目以降は在庫もキャッシュから即表示",
-    stages: [
-      {
-        stage: "prefetch（App Shell）",
-        content: "レイアウト・見出し・skeleton",
-      },
-      {
-        stage: "遷移の応答",
-        content: "商品情報・レコメンド（use cache）",
-      },
-      {
-        stage: "Streaming",
-        content: "在庫（初回のみ 1.5 秒、以降は remote cache から即座）",
-      },
-    ],
-    code: `async function ProductStock({ id }) {
-  // 在庫は動的コンテンツのまま、データだけを共有キャッシュする
-  await connection();
-  return <StockView stock={await getStockRemote(id)} />;
-}
-
-async function getStockRemote(id) {
-  "use cache: remote";
-  cacheLife({ stale: 60, revalidate: 300, expire: 3600 });
-  return fetchStock(id);
 }`,
   },
 } as const satisfies Record<string, Pattern>;

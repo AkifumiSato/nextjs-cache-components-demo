@@ -1,6 +1,6 @@
 import { PatternLayout } from "../_components/patterns";
 
-export default function NavigationLayout({
+export default function PrefetchLayout({
   children,
 }: {
   children: React.ReactNode;
