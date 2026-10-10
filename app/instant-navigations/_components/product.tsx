@@ -1,113 +1,128 @@
-import { Suspense } from "react";
-import { getPrice, getProductName, getReviews, getStock } from "../_lib/data";
+import type { Product, Recommendations, Stock } from "../_lib/data";
 
 // Views
 
 export function ProductHero({
-  id,
-  price,
-  cachedAt,
+  product,
+  source,
   stock,
 }: {
-  id: string;
-  price: number;
-  cachedAt: string;
+  product: Product;
+  source: string;
   stock: React.ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 items-center">
-      <div className="aspect-square rounded-lg border border-neutral-800 bg-neutral-800/40 flex items-center justify-center text-4xl text-neutral-600">
-        {getProductName(id).charAt(0)}
+    <HeroFrame initial={product.name.charAt(0)}>
+      <h2 className="text-2xl font-semibold text-neutral-100">
+        {product.name}
+      </h2>
+      <div className="mt-3 text-3xl font-semibold text-neutral-100">
+        ¥{product.price.toLocaleString()}
       </div>
-      <div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h2 className="text-2xl font-semibold text-neutral-100">
-            {getProductName(id)}
-          </h2>
-          {stock}
-        </div>
-        <div className="mt-3 text-3xl font-semibold text-neutral-100">
-          ¥{price.toLocaleString()}
-        </div>
-        <div className="mt-2 text-xs font-mono text-neutral-500">
-          use cache (hours) ・ 生成時刻: {cachedAt}
-        </div>
-      </div>
+      <Meta>
+        {source} ・ 生成時刻: {product.renderedAt}
+      </Meta>
+      <div className="mt-5">{stock}</div>
+    </HeroFrame>
+  );
+}
+
+export function StockView({ stock, source }: { stock: Stock; source: string }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      {stock.count > 0 ? (
+        <span
+          className={`${stockTagClassName} border-emerald-700/60 bg-emerald-950/40 text-emerald-300`}
+        >
+          在庫あり（{stock.count}）
+        </span>
+      ) : (
+        <span
+          className={`${stockTagClassName} border-neutral-700 bg-neutral-800/60 text-neutral-400`}
+        >
+          在庫なし
+        </span>
+      )}
+      <span className="text-xs font-mono text-neutral-500">
+        {source} ・ 取得時刻: {stock.renderedAt}
+      </span>
     </div>
   );
 }
 
-export function ReviewsView({
-  rating,
-  count,
-  items,
-  fetchedAt,
+// Rendered outside Suspense so the heading is part of the App Shell
+export function RecommendationsSection({
+  children,
 }: {
-  rating: number;
-  count: number;
-  items: { author: string; body: string }[];
-  fetchedAt: string;
+  children: React.ReactNode;
 }) {
   return (
-    <Section title="レビュー" fetchedAt={fetchedAt}>
-      <div className="text-neutral-100 mb-3">
-        {"★".repeat(rating)}
-        {"☆".repeat(5 - rating)}{" "}
-        <span className="text-sm text-neutral-400">{count} 件</span>
-      </div>
-      <ul className="divide-y divide-neutral-800">
-        {items.map((item) => (
-          <li key={item.author} className="py-3 text-sm">
-            <div className="text-neutral-500 text-xs mb-1">{item.author}</div>
-            <div className="text-neutral-300">{item.body}</div>
+    <section>
+      <h3 className="mb-3 border-b border-neutral-800 pb-2 font-medium text-neutral-100">
+        この商品を見た人はこちらも
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+export function RecommendationsView({
+  recommendations,
+  source,
+}: {
+  recommendations: Recommendations;
+  source: string;
+}) {
+  return (
+    <div>
+      <ul className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {recommendations.items.map((item) => (
+          <li
+            key={item.id}
+            className="h-20 rounded-lg border border-neutral-800 bg-neutral-900/40 p-3"
+          >
+            <div className="text-sm text-neutral-200">{item.name}</div>
+            <div className="mt-1 text-sm text-neutral-400">
+              ¥{item.price.toLocaleString()}
+            </div>
           </li>
         ))}
       </ul>
-    </Section>
+      <Meta>
+        {source} ・ 生成時刻: {recommendations.renderedAt}
+      </Meta>
+    </div>
   );
 }
 
 // Fixed size so the tag doesn't shift the layout when it replaces the skeleton
 const stockTagClassName =
-  "inline-flex h-6 w-20 items-center justify-center rounded border text-xs font-medium";
+  "inline-flex h-6 w-28 items-center justify-center rounded border text-xs font-medium";
 
-export function StockTag({ inStock }: { inStock: boolean }) {
-  return inStock ? (
-    <span
-      className={`${stockTagClassName} border-emerald-700/60 bg-emerald-950/40 text-emerald-300`}
-    >
-      在庫あり
-    </span>
-  ) : (
-    <span
-      className={`${stockTagClassName} border-neutral-700 bg-neutral-800/60 text-neutral-400`}
-    >
-      在庫なし
-    </span>
-  );
-}
-
-function Section({
-  title,
-  fetchedAt,
+function HeroFrame({
+  initial,
   children,
 }: {
-  title: string;
-  fetchedAt?: string;
+  initial?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section>
-      <div className="flex items-baseline justify-between gap-4 mb-3 border-b border-neutral-800 pb-2">
-        <h3 className="font-medium text-neutral-100">{title}</h3>
-        <span className="text-xs font-mono text-neutral-500">
-          {fetchedAt
-            ? `毎リクエスト取得 ・ 取得時刻: ${fetchedAt}`
-            : "Streaming 中..."}
-        </span>
+    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 items-center">
+      <div
+        className={`aspect-square rounded-lg border border-neutral-800 bg-neutral-800/40 flex items-center justify-center text-4xl text-neutral-600 ${
+          initial ? "" : "animate-pulse"
+        }`}
+      >
+        {initial}
       </div>
-      {children}
-    </section>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function Meta({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-2 text-xs font-mono text-neutral-500">{children}</div>
   );
 }
 
@@ -121,71 +136,30 @@ function Bar({ className }: { className: string }) {
 
 export function ProductHeroSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 items-center">
-      <div className="aspect-square rounded-lg bg-neutral-800/40 animate-pulse" />
-      <div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <Bar className="h-8 w-64" />
-          <StockSkeleton />
-        </div>
-        <Bar className="mt-3 h-9 w-32" />
-        <Bar className="mt-2 h-4 w-48" />
+    <HeroFrame>
+      <Bar className="h-8 w-64" />
+      <Bar className="mt-3 h-9 w-32" />
+      <Bar className="mt-2 h-4 w-48" />
+      <div className="mt-5">
+        <StockSkeleton />
       </div>
-    </div>
-  );
-}
-
-export function ReviewsSkeleton() {
-  return (
-    <Section title="レビュー">
-      <div className="space-y-3">
-        <Bar className="h-4 w-32" />
-        <Bar className="h-3 w-3/4" />
-        <Bar className="h-3 w-2/3" />
-        <Bar className="h-3 w-1/2" />
-      </div>
-    </Section>
+    </HeroFrame>
   );
 }
 
 export function StockSkeleton() {
-  return <Bar className="h-6 w-20" />;
+  return <Bar className="h-6 w-28" />;
 }
 
-export function ProductPageSkeleton() {
+export function RecommendationsSkeleton() {
   return (
-    <div className="space-y-10">
-      <ProductHeroSkeleton />
-      <ReviewsSkeleton />
+    <div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Bar className="h-20" />
+        <Bar className="h-20" />
+        <Bar className="h-20" />
+      </div>
+      <Bar className="mt-2 h-4 w-48" />
     </div>
   );
-}
-
-// Loaders
-
-// Keep the price fetch out of the page component. The page component re-runs
-// when rendering the dynamic parts at request time, so awaiting the price there
-// would delay the Suspense boundaries below on a runtime cache miss.
-export async function ProductSummary({ id }: { id: string }) {
-  const { price, cachedAt } = await getPrice(id);
-  return (
-    <ProductHero
-      id={id}
-      price={price}
-      cachedAt={cachedAt}
-      stock={
-        <Suspense fallback={<StockSkeleton />}>
-          <Stock id={id} />
-        </Suspense>
-      }
-    />
-  );
-}
-
-export async function Reviews({ id }: { id: string }) {
-  return <ReviewsView {...(await getReviews(id))} />;
-}
-
-async function Stock({ id }: { id: string }) {
-  return <StockTag {...(await getStock(id))} />;
 }
