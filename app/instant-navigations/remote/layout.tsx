@@ -5,5 +5,5 @@ export default function RemoteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <PatternLayout pattern="remote">{children}</PatternLayout>;
+  return <PatternLayout pattern="instantPrefetchRemote">{children}</PatternLayout>;
 }

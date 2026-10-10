@@ -5,5 +5,5 @@ export default function CachedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <PatternLayout pattern="cached">{children}</PatternLayout>;
+  return <PatternLayout pattern="instant">{children}</PatternLayout>;
 }

@@ -5,5 +5,5 @@ export default function NavigationLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <PatternLayout pattern="navigation">{children}</PatternLayout>;
+  return <PatternLayout pattern="instantPrefetch">{children}</PatternLayout>;
 }

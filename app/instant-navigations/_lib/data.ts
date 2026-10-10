@@ -8,7 +8,7 @@ const products: Record<string, { name: string; price: number; stock: number }> =
     "2": { name: "ワイヤレスマウス", price: 4980, stock: 0 },
     "3": { name: "4K モニター", price: 39800, stock: 3 },
     "4": { name: "USB-C ハブ", price: 3480, stock: 0 },
-    "5": { name: "ノイズキャンセリングヘッドホン", price: 29800, stock: 7 },
+    "5": { name: "ヘッドホン", price: 29800, stock: 7 },
     "6": { name: "スタンディングデスク", price: 54800, stock: 0 },
     "7": { name: "Web カメラ", price: 8980, stock: 21 },
     "8": { name: "モニターアーム", price: 7980, stock: 0 },

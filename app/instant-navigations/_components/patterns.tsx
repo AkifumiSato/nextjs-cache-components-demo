@@ -1,68 +1,148 @@
 import { BackLink } from "./back-link";
 
+type Pattern = {
+  label: string;
+  className: string;
+  href: string;
+  ids: readonly string[];
+  prefetch: true | undefined;
+  // What this pattern adds, shown as the step's key technique
+  change: string;
+  // What to look for right after clicking
+  observe: string;
+  // When each part of the page arrives
+  stages: readonly { stage: string; content: string }[];
+  code: string;
+};
+
 export const patterns = {
-  dynamic: {
+  legacy: {
     label: "legacy",
     className: "border-amber-700/60 bg-amber-950/40 text-amber-300",
     href: "/instant-navigations/dynamic",
     ids: ["1", "2"],
     prefetch: undefined,
-    summary: (
-      <>
-        キャッシュも Suspense もなく、毎リクエスト全データを取得して await
-        するページです。すべて揃うまで（約 2 秒）画面が切り替わりません。
-      </>
-    ),
+    change: "キャッシュも Suspense もなし",
+    observe: "全データが揃うまで（約 2 秒）画面が切り替わらない",
+    stages: [
+      { stage: "prefetch", content: "レイアウトのみ" },
+      {
+        stage: "遷移時",
+        content: "商品情報・レコメンド・在庫をすべて取得してから一括表示",
+      },
+    ],
+    code: `export const instant = false;
+
+export default async function Page({ params }) {
+  const { id } = await params;
+  const [product, recommendations, stock] = await Promise.all([
+    getProductDynamic(id),
+    getRecommendationsDynamic(id),
+    getStockDynamic(id),
+  ]);
+  // ...
+}`,
   },
-  cached: {
+  instant: {
     label: "instant",
     className: "border-sky-700/60 bg-sky-950/40 text-sky-300",
     href: "/instant-navigations/cached",
     ids: ["3", "4"],
     prefetch: undefined,
-    summary: (
-      <>
-        商品情報・レコメンドを use cache し、generateStaticParams で prerender
-        したページです。params を Suspense の内側で読むため、URL
-        に依存しない部分（レイアウト・見出し・skeleton）が App Shell
-        になり、クリック直後に表示されます。商品情報・レコメンドは遷移の応答で、毎リクエスト取得する在庫（1.5
-        秒）はその後 Streaming されます。
-      </>
-    ),
+    change: "Suspense + use cache + generateStaticParams",
+    observe: "App Shell（見出し・skeleton）が即表示され、中身は後から届く",
+    stages: [
+      {
+        stage: "prefetch（App Shell）",
+        content: "レイアウト・見出し・skeleton",
+      },
+      {
+        stage: "遷移の応答",
+        content: "商品情報・レコメンド（use cache）",
+      },
+      { stage: "Streaming", content: "在庫（毎リクエスト取得・1.5 秒）" },
+    ],
+    code: `export const instant = true;
+
+export function generateStaticParams() {
+  return [{ id: "3" }, { id: "4" }];
+}
+
+// params を await せず Suspense の内側で読むので、外側が App Shell になる
+export default function Page({ params }) {
+  return (
+    <Suspense fallback={<ProductHeroSkeleton />}>
+      <ProductSummary params={params} />
+    </Suspense>
+  );
+}`,
   },
-  navigation: {
+  instantPrefetch: {
     label: "instant + prefetch",
     className: "border-emerald-700/60 bg-emerald-950/40 text-emerald-300",
     href: "/instant-navigations/navigation",
     ids: ["5", "6"],
     prefetch: true,
-    summary: (
-      <>
-        リンクに prefetch={"{true}"}{" "}
-        を指定し、キャッシュ済みの商品情報・レコメンドまでリンクごとに prefetch
-        します。在庫（use cache・5 分）だけは await navigation()
-        で遷移まで待たせるため、クリック直後は在庫以外がすべて表示され、在庫は遷移時に取得されます。
-      </>
-    ),
+    change: "prefetch={true} + navigation()",
+    observe: "在庫以外がすべて即表示され、在庫だけ遷移時に取得される",
+    stages: [
+      {
+        stage: "prefetch（リンク単位）",
+        content: "App Shell ＋ 商品情報・レコメンド",
+      },
+      {
+        stage: "遷移時",
+        content:
+          "在庫（navigation() 以降・use cache 5 分なので 2 回目以降は即座）",
+      },
+    ],
+    code: `<Link href="/instant-navigations/navigation/5" prefetch={true}>
+
+async function ProductStock({ id }) {
+  // ここから下は prefetch に含めず、遷移時に実行する
+  await navigation();
+  return <StockView stock={await getStockCached(id)} />;
+}`,
   },
-  remote: {
+  instantPrefetchRemote: {
     label: "instant + prefetch + remote cache",
     className: "border-violet-700/60 bg-violet-950/40 text-violet-300",
     href: "/instant-navigations/remote",
     ids: ["7", "8"],
     prefetch: undefined,
-    summary: (
-      <>
-        use cache + generateStaticParams と同じ構成で、在庫だけを connection()
-        以降の動的コンテンツのまま use cache: remote（5
-        分）でキャッシュします。初回は在庫の取得（1.5 秒）を待ちますが、2
-        回目以降はリクエストを跨いでキャッシュが使われ、遷移の応答と同時に表示されます。
-      </>
-    ),
+    change: "connection() + use cache: remote",
+    observe: "初回は在庫を待つが、2 回目以降は在庫もキャッシュから即表示",
+    stages: [
+      {
+        stage: "prefetch（App Shell）",
+        content: "レイアウト・見出し・skeleton",
+      },
+      {
+        stage: "遷移の応答",
+        content: "商品情報・レコメンド（use cache）",
+      },
+      {
+        stage: "Streaming",
+        content: "在庫（初回のみ 1.5 秒、以降は remote cache から即座）",
+      },
+    ],
+    code: `async function ProductStock({ id }) {
+  // 在庫は動的コンテンツのまま、データだけを共有キャッシュする
+  await connection();
+  return <StockView stock={await getStockRemote(id)} />;
+}
+
+async function getStockRemote(id) {
+  "use cache: remote";
+  cacheLife({ stale: 60, revalidate: 300, expire: 3600 });
+  return fetchStock(id);
+}`,
   },
-} as const;
+} as const satisfies Record<string, Pattern>;
 
 export type PatternKey = keyof typeof patterns;
+
+export const patternKeys = Object.keys(patterns) as PatternKey[];
 
 export function PatternTag({ pattern }: { pattern: PatternKey }) {
   const { label, className } = patterns[pattern];
@@ -82,16 +162,33 @@ export function PatternLayout({
   pattern: PatternKey;
   children: React.ReactNode;
 }) {
+  const { observe, stages, code } = patterns[pattern];
   return (
     <div>
       <div className="mb-8">
         <BackLink />
-        <PatternTag pattern={pattern} />
-        <p className="mt-3 text-sm text-neutral-400">
-          {patterns[pattern].summary}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <PatternTag pattern={pattern} />
+          <span className="text-sm text-neutral-400">{observe}</span>
+        </div>
       </div>
       {children}
+      <section className="mt-16 border-t border-neutral-800 pt-6">
+        <h2 className="mb-4 font-medium text-neutral-100">
+          このページで起きたこと
+        </h2>
+        <dl className="mb-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+          {stages.map(({ stage, content }) => (
+            <div key={stage} className="contents">
+              <dt className="text-neutral-500">{stage}</dt>
+              <dd className="text-neutral-300">{content}</dd>
+            </div>
+          ))}
+        </dl>
+        <pre className="overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 text-xs leading-relaxed text-neutral-300">
+          <code>{code}</code>
+        </pre>
+      </section>
     </div>
   );
 }

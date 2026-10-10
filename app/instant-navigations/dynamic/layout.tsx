@@ -5,5 +5,5 @@ export default function DynamicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <PatternLayout pattern="dynamic">{children}</PatternLayout>;
+  return <PatternLayout pattern="legacy">{children}</PatternLayout>;
 }
