@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   experimental: {
-    mcpServer: true,
+    requestInsights: true,
   },
 };
 

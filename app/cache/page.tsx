@@ -113,6 +113,23 @@ function CardSkeleton() {
   );
 }
 
+async function fetchProducts1() {
+  "use cache";
+  await fetch("https://dummyjson.com/products/1")
+    .then((res) => res.json())
+    .then(console.log);
+}
+
+async function Test() {
+  await fetch("https://dummyjson.com/products")
+    .then((res) => res.json())
+    .then(console.log);
+
+  await fetchProducts1();
+
+  return null;
+}
+
 export default function CacheDemoPage({
   searchParams,
 }: {
@@ -120,6 +137,9 @@ export default function CacheDemoPage({
 }) {
   return (
     <div>
+      <Suspense>
+        <Test />
+      </Suspense>
       <header className="mb-10">
         <h1 className="text-2xl font-semibold text-neutral-100 mb-3">
           Cache Components Explorer
