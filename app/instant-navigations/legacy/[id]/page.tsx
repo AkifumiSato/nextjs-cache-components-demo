@@ -14,7 +14,7 @@ import {
 // the navigation blocks because the page awaits everything without Suspense.
 export const instant = false;
 
-export default async function DynamicPage({
+export default async function LegacyPage({
   params,
 }: {
   params: Promise<{ id: string }>;

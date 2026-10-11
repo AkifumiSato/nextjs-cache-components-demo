@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClearCacheButton } from "./_components/clear-cache-button";
 import { Faq } from "./_components/faq";
 import { Note } from "./_components/note";
 import {
@@ -29,10 +30,10 @@ export default function InstantNavigationsPage() {
           </p>
           <p>
             商品ページはどれも、商品情報（1 秒）・レコメンド（2 秒）・在庫（1.5
-            秒）を表示します。instant
-            では商品情報だけをクリック前に用意し、レコメンドと在庫は遷移時に取得します。instant
-            + prefetch では、在庫もクリック前に用意します（在庫のキャッシュは 10
-            秒）。レコメンドは両方とも遷移時に取得します。各データの横に、どこで・いつ生成されたかを表示しています。
+            秒）を表示します。データはどれもキャッシュします。レコメンドは常に遷移時に取得し、在庫は
+            instant では遷移時、instant + prefetch では prefetch
+            時に取得します。キャッシュが残っていると 2
+            回目以降はすぐに表示されるので、比べるときは一覧の「キャッシュをすべてクリア」で初回の状態に戻してください。各データの横に、どこで・いつ生成されたかを表示しています。
           </p>
         </Note>
       </div>
@@ -63,9 +64,17 @@ function DemoPanel() {
           <PatternRow key={key} pattern={key} step={i + 1} />
         ))}
       </ol>
-      <p className="mt-4 text-xs text-neutral-500">
-        思った挙動と違ったときは「解説」タブを見てください。
-      </p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-neutral-500">
+          思った挙動と違ったときは「解説」タブを見てください。
+        </p>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-neutral-500">
+            商品情報・レコメンド・在庫のキャッシュを消して、初回の遷移を再現します
+          </span>
+          <ClearCacheButton />
+        </div>
+      </div>
     </div>
   );
 }
@@ -121,13 +130,13 @@ const comparison: Record<
   instant: {
     prefetched: "App Shell（レイアウト・見出し・skeleton）",
     onClick: "skeleton → 遷移の応答で商品情報",
-    recommendations: "遷移時に Streaming（キャッシュ内なら即座）",
-    stock: "遷移時に Streaming（1.5 秒）",
+    recommendations: "遷移時に Streaming（初回 2 秒）",
+    stock: "遷移時に Streaming（初回 1.5 秒）",
   },
   instantPrefetch: {
     prefetched: "App Shell ＋ 商品情報・在庫",
     onClick: "商品情報・在庫を表示",
-    recommendations: "遷移時に Streaming（キャッシュ内なら即座）",
+    recommendations: "遷移時に Streaming（初回 2 秒）",
     stock: "prefetch 済み（遷移の応答で最新の値に置き換わることがある）",
   },
 };
@@ -178,15 +187,12 @@ function ComparePanel() {
       </div>
       <div className="text-sm text-neutral-500">
         <p className="mb-1">
-          在庫は instant では遷移時に毎回取得し、instant + prefetch では
-          prefetch 時に取得します（10
-          秒以内の再訪はキャッシュから即座）。上の表は典型的な挙動で、次の条件で変わることがあります（詳しくは下の
+          上の表は典型的な挙動で、次の条件で変わることがあります（詳しくは下の
           Q&amp;A）。
         </p>
         <ul className="list-disc list-inside space-y-1">
           <li>
-            instant パターンで、一覧で最初に処理されたリンクか（prerender ごと
-            prefetch され、商品情報まで即座に表示される）
+            キャッシュが残っているか（2 回目以降はキャッシュからすぐ返る）
           </li>
           <li>prefetch が終わる前にクリックしたか（App Shell の表示になる）</li>
           <li>

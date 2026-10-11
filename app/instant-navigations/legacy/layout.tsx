@@ -1,9 +1,9 @@
 import { PatternLayout } from "../_components/patterns";
 
-export default function CachedLayout({
+export default function LegacyLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <PatternLayout pattern="instant">{children}</PatternLayout>;
+  return <PatternLayout pattern="legacy">{children}</PatternLayout>;
 }

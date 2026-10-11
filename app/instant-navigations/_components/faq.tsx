@@ -32,55 +32,58 @@ export function Faq() {
           は検証を止めるだけで、挙動は変えません。
         </p>
       </Note>
-      <Note summary="Q. instant パターンの 2 商品で挙動が違うのはなぜ？">
-        <p>
-          App Shell の prefetch はルートごとに 1
-          本だけで、一覧ページで最初に処理されたリンクの URL
-          に対して飛びます。この URL は generateStaticParams で prerender
-          済みなので、返ってくるのはその URL の prerender（商品情報入り）です。
-        </p>
-        <p>
-          クライアントはここから App Shell
-          を取り出して同じルートの他のリンクと共有しつつ、その URL
-          の中身も保持します。そのため prefetch={"{true}"}{" "}
-          がなくても、最初のリンクだけは商品情報まで即座に表示されます。
-        </p>
-        <p className="text-neutral-500">
-          Next.js 16.4.0 で計測した挙動で、docs には記載がありません。
-        </p>
-      </Note>
-      <Note summary="Q. レコメンドはキャッシュしているのに、なぜ prefetch されないの？">
-        <p>
-          どちらのパターンも、レコメンドは await connection()
-          のあとで取得しています。connection()
-          より下はリクエスト時にしか実行されないため、build 時の prerender
-          にも、App Shell・リンク単位の prefetch にも含まれません。
-        </p>
-        <p>
-          getRecommendations は use cache
-          なので、結果はサーバーにキャッシュされます。遷移のたびに描画されますが、キャッシュが有効な間はデータが即座に返ります。2
-          秒待つのは、初回と、20
-          秒以上アクセスがなくキャッシュが切れたときです。
-        </p>
-      </Note>
       <Note summary="Q. instant と instant + prefetch は何が違うの？">
         <p>
-          リンクに prefetch={"{true}"}{" "}
-          を付けているかどうかと、在庫をキャッシュしているかどうかです。
+          ページは同じコンポーネントで、違いはリンクに prefetch={"{true}"}{" "}
+          を付けているかと、在庫の手前で await navigation() と await prefetch()
+          のどちらを呼んでいるかです。
         </p>
         <p>
           通常の Link が prefetch するのは App Shell だけで、URL
           に依存する商品情報や在庫は含まれません。prefetch={"{true}"}{" "}
           を付けると、リンクごとにその URL
           をサーバーで描画し、キャッシュ済みのデータまでを prefetch
-          に含めます。キャッシュしていない読み込み（connection()
-          の後のレコメンドなど）の手前で止まり、そこは Suspense の fallback
-          になります。
+          に含めます。connection() の後のレコメンドの手前で止まり、そこは
+          Suspense の fallback になります。
         </p>
         <p>
-          在庫は use cache（10 秒）にしているので、リンク単位の prefetch
-          に含まれます。表示中のリンクごとに prefetch が走っても、在庫 API
-          は商品ごとに 10 秒に 1 回程度しか呼ばれません。
+          navigation() より下はリンク単位の prefetch
+          でも実行されず、遷移したときに解決されます。prefetch() より下は App
+          Shell には入りませんが、リンク単位の prefetch で解決されます。在庫は
+          params に依存するので、どちらの関数がなくても App Shell
+          には入りません。2
+          つの関数は、在庫をどの段階で解決するかをコードに明示し、リンクの
+          prefetch 指定が変わってもその意図を保つためのものです。
+        </p>
+        <p>
+          在庫はどちらのパターンでもキャッシュ（10
+          秒ごとに更新）しているので、表示中のリンクごとに prefetch
+          が走っても、在庫 API は商品ごとに 10 秒に 1 回程度しか呼ばれません。
+        </p>
+      </Note>
+      <Note summary="Q. generateStaticParams を使わないのはなぜ？">
+        <p>
+          build 時の prerender には、navigation() や prefetch()
+          の下も含まれます。instant では一覧で最初に処理されたリンクが、App
+          Shell の代わりにその URL の prerender ごと prefetch
+          されるため、在庫まで遷移前に届いてしまいます。
+        </p>
+        <p>
+          generateStaticParams がなければ prerender は App Shell
+          だけになり、在庫が解決される段階をリンクの prefetch 指定と 2
+          つの関数で決められます。
+        </p>
+      </Note>
+      <Note summary="Q. レコメンドはキャッシュしているのに、なぜ prefetch されないの？">
+        <p>
+          レコメンドは await connection() のあとで取得しています。connection()
+          より下はリクエスト時にしか実行されないため、build 時の prerender
+          にも、App Shell・リンク単位の prefetch にも含まれません。
+        </p>
+        <p>
+          getRecommendations は use cache
+          なので、結果はサーバーにキャッシュされます。遷移のたびに描画されますが、キャッシュが有効な間はデータが即座に返ります。2
+          秒待つのは、初回と、5 分以上アクセスがなくキャッシュが切れたときです。
         </p>
       </Note>
       <Note summary="Q. instant + prefetch で、遷移後に在庫の取得時刻が変わることがあるのはなぜ？">
@@ -90,35 +93,22 @@ export function Faq() {
           済みの内容をすぐに表示し、遷移の応答が届くとそれで置き換えます。
         </p>
         <p>
-          このとき在庫も描画し直されるため、サーバー側のキャッシュ（10
-          秒）が切れていれば最新の値に置き換わります。クリック直後に在庫が表示されていれば、prefetch
+          このとき在庫も描画し直されるため、prefetch から 10
+          秒以上経っていれば新しい値に置き換わります。クリック直後に在庫が表示されていれば、prefetch
           は効いています。
         </p>
       </Note>
-      <Note summary="Q. prefetch パターンだけ generateStaticParams がないのはなぜ？">
+      <Note summary="Q. 2 回目以降はすぐに表示されるのはなぜ？">
         <p>
-          build 時に prerender すると、リンク単位の prefetch がその prerender
-          から返されることがあります。在庫はキャッシュの寿命が短い（expire が 5
-          分未満）ため prerender には含まれず、prefetch にも入らなくなります。
+          データはどれもサーバーでキャッシュしているので、一度取得した商品は 2
+          回目以降キャッシュから返ります。初回の遷移を見比べたいときは、一覧の「キャッシュをすべてクリア」を押してください。
         </p>
         <p>
-          generateStaticParams がなければ、リンク単位の prefetch
-          は実行時に描画され、商品情報・在庫までを解決します。
-        </p>
-      </Note>
-      <Note summary="Q. 商品情報の生成時刻が build 時刻のままなのはなぜ？">
-        <p>
-          instant パターンでは、generateStaticParams で prerender した URL の
-          build 時の use cache
-          の結果が実行時にも使われます。遷移時のリクエストは実行時にレンダリングされますが、cacheLife(&quot;hours&quot;)
-          の revalidate（1 時間）を過ぎるまでは、build 時の結果が返ります。
-        </p>
-        <p>
-          レコメンドは prerender
-          に含まれないため、商品ごとに最初にリクエストされた時刻になります。
-        </p>
-        <p className="text-neutral-500">
-          Next.js 16.4.0 の next start で計測した挙動です。
+          このボタンは Server Action で updateTag
+          を呼び、商品情報・レコメンド・在庫のキャッシュをすぐに失効させます。Server
+          Action
+          ではクライアントのルーターキャッシュもクリアされるので、prefetch
+          もやり直されます。
         </p>
       </Note>
       <Note summary="Q. どの prefetch が飛んだかはどう見分ける？">
@@ -132,7 +122,7 @@ export function Faq() {
           </li>
           <li>
             <code>next-router-segment-prefetch</code> に <code>__PAGE__</code>{" "}
-            を含む：App Shell（または最初のリンクの prerender）
+            を含む：App Shell
           </li>
           <li>
             <code>next-router-prefetch: 2</code>：prefetch={"{true}"}{" "}

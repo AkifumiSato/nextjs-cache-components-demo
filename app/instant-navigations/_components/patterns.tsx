@@ -19,7 +19,7 @@ export const patterns = {
   legacy: {
     label: "legacy",
     className: "border-amber-700/60 bg-amber-950/40 text-amber-300",
-    href: "/instant-navigations/dynamic",
+    href: "/instant-navigations/legacy",
     ids: ["1", "2"],
     prefetch: undefined,
     change: "キャッシュも Suspense もなし",
@@ -46,10 +46,10 @@ export default async function Page({ params }) {
   instant: {
     label: "instant",
     className: "border-sky-700/60 bg-sky-950/40 text-sky-300",
-    href: "/instant-navigations/cached",
+    href: "/instant-navigations/instant",
     ids: ["3", "4"],
     prefetch: undefined,
-    change: "Suspense + use cache + generateStaticParams",
+    change: "Suspense + use cache + navigation()",
     observe: "App Shell（見出し・skeleton）が即表示され、中身は後から届く",
     stages: [
       {
@@ -58,63 +58,53 @@ export default async function Page({ params }) {
       },
       { stage: "遷移の応答", content: "商品情報（use cache）" },
       {
-        stage: "Streaming（遷移時）",
+        stage: "Streaming",
         content:
-          "レコメンド（connection() + use cache）・在庫（connection()・毎リクエスト取得・1.5 秒）",
+          "在庫（navigation() + use cache 10 秒）・レコメンド（connection() + use cache 10 秒）",
       },
     ],
     code: `export const instant = true;
 
-export function generateStaticParams() {
-  return [{ id: "3" }, { id: "4" }];
-}
-
 // params を await せず Suspense の内側で読むので、外側が App Shell になる
 export default function Page({ params }) {
-  return (
-    <Suspense fallback={<ProductHeroSkeleton />}>
-      <ProductSummary params={params} />
-    </Suspense>
-  );
+  return <ProductPage params={params} stockStage="navigation" />;
 }
 
-async function ProductRecommendations({ params }) {
-  const { id } = await params;
-  // レコメンドはキャッシュするが、connection() で prerender・prefetch から外す
-  await connection();
-  return <RecommendationsView recommendations={await getRecommendations(id)} />;
+async function ProductStock({ id }) {
+  // ここから下は遷移したときに実行する
+  await navigation();
+  return <StockView stock={await getStock(id)} />;
 }`,
   },
   instantPrefetch: {
     label: "instant + prefetch",
     className: "border-emerald-700/60 bg-emerald-950/40 text-emerald-300",
-    href: "/instant-navigations/prefetch",
+    href: "/instant-navigations/instant-prefetch",
     ids: ["5", "6"],
     prefetch: true,
-    change: "prefetch={true}（在庫を use cache に）",
+    change: "prefetch={true} + prefetch()",
     observe: "商品情報・在庫はクリック直後に表示され、レコメンドは遷移時に届く",
     stages: [
       {
         stage: "prefetch（リンク単位）",
-        content: "App Shell ＋ 商品情報（use cache）・在庫（use cache 10 秒）",
+        content:
+          "App Shell ＋ 商品情報（use cache）・在庫（prefetch() + use cache 10 秒）",
       },
       {
-        stage: "遷移時",
+        stage: "Streaming",
         content: "レコメンド（connection() + use cache 10 秒）",
       },
     ],
-    code: `<Link href="/instant-navigations/prefetch/5" prefetch={true}>
+    code: `<Link href="/instant-navigations/instant-prefetch/5" prefetch={true}>
 
-// キャッシュ済みで URL（id）に依存するので、リンク単位の prefetch に含まれる
-async function ProductStock({ id }) {
-  return <StockView stock={await getStockCached(id)} />;
+export default function Page({ params }) {
+  return <ProductPage params={params} stockStage="prefetch" />;
 }
 
-async function ProductRecommendations({ params }) {
-  const { id } = await params;
-  // prefetch では実行されず、遷移時に実行される
-  await connection();
-  return <RecommendationsView recommendations={await getRecommendations(id)} />;
+async function ProductStock({ id }) {
+  // ここから下は App Shell では実行せず、リンク単位の prefetch で実行する
+  await prefetch();
+  return <StockView stock={await getStock(id)} />;
 }`,
   },
 } as const satisfies Record<string, Pattern>;

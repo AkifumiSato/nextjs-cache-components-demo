@@ -1,6 +1,6 @@
 import { PatternLayout } from "../_components/patterns";
 
-export default function PrefetchLayout({
+export default function InstantPrefetchLayout({
   children,
 }: {
   children: React.ReactNode;

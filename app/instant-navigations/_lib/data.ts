@@ -1,4 +1,4 @@
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { connection } from "next/server";
 
 // Products are paired within each demo route (1-2, 3-4, 5-6). 7-8 only
@@ -57,7 +57,7 @@ async function fetchStock(id: string) {
   return { count: products[id]?.stock ?? 0, renderedAt: now() };
 }
 
-// Dynamic: fetched on every request
+// Fetched on every request
 
 export async function getProductDynamic(id: string) {
   await connection();
@@ -69,38 +69,41 @@ export async function getRecommendationsDynamic(id: string) {
   return fetchRecommendations(id);
 }
 
-// Stock isn't cached in the legacy and instant patterns
 export async function getStockDynamic(id: string) {
   await connection();
   return fetchStock(id);
 }
 
-// Short enough to refresh often, long enough to absorb repeated prefetches.
-// expire must be longer than revalidate. The client router raises stale to at
-// least 30 seconds, so it is set to 30 explicitly.
-const shortCacheLife = { stale: 30, revalidate: 10, expire: 20 };
+// Refreshed every 10 seconds. stale and expire are kept at or above the
+// thresholds (30 seconds / 5 minutes) below which Next.js leaves cached data
+// out of prerenders.
+const shortCacheLife = { stale: 30, revalidate: 10, expire: 300 };
 
-// Product details rarely change, so they are cached and can be prerendered
-// or prefetched
+// Shared by every cached function so the demo can clear them all at once
+export const cacheTagName = "instant-navigations";
+
+// Product details rarely change
 
 export async function getProduct(id: string) {
   "use cache";
   cacheLife("hours");
+  cacheTag(cacheTagName);
   return fetchProduct(id);
 }
 
-// Recommendations can be cached, but pages call connection() first so they
-// aren't generated at build time or in the per-link prefetch
+// Pages call connection() before this, so recommendations are always
+// rendered on navigation
 export async function getRecommendations(id: string) {
   "use cache";
   cacheLife(shortCacheLife);
+  cacheTag(cacheTagName);
   return fetchRecommendations(id);
 }
 
-// Stock cached for the prefetch pattern. Its per-link prefetch runs for every
-// visible link, so the cache keeps the stock API calls down.
-export async function getStockCached(id: string) {
+// Pages decide when the stock resolves with navigation() or prefetch()
+export async function getStock(id: string) {
   "use cache";
   cacheLife(shortCacheLife);
+  cacheTag(cacheTagName);
   return fetchStock(id);
 }
