@@ -29,7 +29,7 @@ export function ProductHero({
 
 export function StockView({ stock, source }: { stock: Stock; source: string }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+    <StockRow>
       {stock.count > 0 ? (
         <span
           className={`${stockTagClassName} border-emerald-700/60 bg-emerald-950/40 text-emerald-300`}
@@ -43,10 +43,10 @@ export function StockView({ stock, source }: { stock: Stock; source: string }) {
           在庫なし
         </span>
       )}
-      <span className="text-xs font-mono text-neutral-500">
+      <span className="whitespace-nowrap text-xs font-mono text-neutral-500">
         {source} ・ 取得時刻: {stock.renderedAt}
       </span>
-    </div>
+    </StockRow>
   );
 }
 
@@ -147,8 +147,20 @@ export function ProductHeroSkeleton() {
   );
 }
 
+// Same row as StockView so that replacing the skeleton doesn't move the content
+// below it
 export function StockSkeleton() {
-  return <Bar className="h-6 w-28" />;
+  return (
+    <StockRow>
+      <Bar className="h-6 w-28" />
+      <Bar className="h-4 w-56" />
+    </StockRow>
+  );
+}
+
+// Fixed height: the source text sits on the same line as the tag and never wraps
+function StockRow({ children }: { children: React.ReactNode }) {
+  return <div className="flex h-6 items-center gap-x-3">{children}</div>;
 }
 
 export function RecommendationsSkeleton() {
